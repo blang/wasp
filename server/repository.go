@@ -80,10 +80,17 @@ func (r *Repository) Build() error {
 					}
 					inputPath := filepath.Join(preFile.prefix, preFile.file.Name)
 					outputPath := filepath.Join(r.destPath, preFile.file.Hash+".xz")
-					err := compress(inputPath, outputPath)
-					if err != nil {
-						multiError.Add(fmt.Errorf("Could not compress file %s to %s", inputPath, outputPath))
+					_, err := os.Stat(outputPath)
+					if err == nil {
+						continue
 					}
+					outputPathTmp := filepath.Join(r.destPath, preFile.file.Hash+".xz_tmp")
+					err = compress(inputPath, outputPathTmp)
+					if err != nil {
+						multiError.Add(fmt.Errorf("Could not compress file %s to %s: %s\n", inputPath, outputPath, err))
+						continue
+					}
+					os.Rename(outputPathTmp, outputPath)
 				}
 			}
 		}()
